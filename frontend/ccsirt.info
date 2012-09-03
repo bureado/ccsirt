@@ -1,0 +1,4 @@
+name = CCSIRT
+description = Crowdsourced CSIRT Integration Module
+package = User interface
+core = 7.x

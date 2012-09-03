@@ -1,0 +1,46 @@
+<?php
+
+//
+// CCSIRT Project Drupal 7 Integration Module
+// (C) 2012 José Miguel Parrella Romero <bureado@cpan.org>
+// 
+// Free software released under the same terms of Perl.
+//
+
+function ccsirt_action_info() {
+  return array(
+    'ccsirt_report' => array(
+      'type' => 'node',
+      'label' => t('Create phishing report'),
+      'configurable' => FALSE,
+      'behavior' => array('changes_property'),
+      'triggers' => array('node_presave', 'comment_insert', 'comment_update', 'comment_delete'),
+    ),
+  );
+}
+
+function ccsirt_report($node, $context) {
+  error_reporting(0);
+
+  if ( $node->type == 'reporte' ) {
+    $n = new stdClass();
+    $n->type = 'informes';
+    node_object_prepare($n);
+
+    // Dump del body a un archivo temporal
+    $fnme = '/tmp/' . time() . '.txt';
+    $file = fopen($fnme, "w");
+    fwrite($file, $node->field_mail['und'][0]['value']);
+    fclose($file);
+
+    // Ejecucion del parser
+    exec("/usr/local/bin/email-evidence-parser.pl < $fnme", $out, $ret);
+
+    // Dump del output al body y creacion del nodo
+    $n->title = '[INFORME] ' . $node->title;
+    $n->body['und'][0]['value'] = join("\n", $out);
+    node_save($n);
+  }
+}
+
+?>
